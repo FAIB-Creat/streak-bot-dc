@@ -93,7 +93,7 @@ async function fetchAvatarImage(url) {
     placeholderCtx.fillStyle = "#2f3136";
     placeholderCtx.fillRect(0, 0, 128, 128);
     placeholderCtx.fillStyle = "#ffffff";
-    placeholderCtx.font = "bold 48px Sans";
+    placeholderCtx.font = "bold 48px Arial";
     placeholderCtx.fillText("?", 40, 90);
     return placeholder;
   }
@@ -203,7 +203,7 @@ async function createStreakImage(user, partner, streakData) {
 
   const nameY = avatarY + avatarSize + 18;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 20px Sans";
+  ctx.font = "20px Arial";
   ctx.textAlign = "center";
   ctx.fillText(user.username, leftAvatarX + avatarSize / 2, nameY);
   ctx.fillText(partner.username, rightAvatarX + avatarSize / 2, nameY);
@@ -221,13 +221,13 @@ async function createStreakImage(user, partner, streakData) {
   ctx.restore();
 
   ctx.fillStyle = "#ffd864";
-  ctx.font = "bold 70px Sans";
+  ctx.font = "bold 70px Arial";
   ctx.textAlign = "center";
   ctx.fillText("🔥", flameX, flameY + 12);
 
   const titleY = panelY + 45;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 36px Sans";
+  ctx.font = "bold 36px Arial";
   ctx.textAlign = "center";
   ctx.fillText("🔥 Streak Kamu", centerX, titleY);
 
@@ -235,7 +235,9 @@ async function createStreakImage(user, partner, streakData) {
   const pairMaxWidth = panelW - 120;
   ctx.fillStyle = "#d9e1ff";
   ctx.font =
-    ctx.measureText(pairText).width <= pairMaxWidth ? "20px Sans" : "18px Sans";
+    ctx.measureText(pairText).width <= pairMaxWidth
+      ? "20px Arial"
+      : "18px Arial";
   const pairY = titleY + 30;
   ctx.fillText(pairText, centerX, pairY);
 
@@ -266,7 +268,7 @@ async function createStreakImage(user, partner, streakData) {
   ctx.stroke();
 
   const statsY = statsBlockY + 32;
-  ctx.font = "20px Sans";
+  ctx.font = "20px Arial";
   ctx.fillStyle = "#d9e1ff";
   ctx.textAlign = "center";
   ctx.fillText(`🔥 Streak: ${streakData.streak} hari`, centerX, statsY);
@@ -350,6 +352,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const targetId = parts[2];
 
     if (interaction.user.id !== targetId) {
+      if (interaction.replied || interaction.deferred) return;
       return interaction.reply({
         content: "❌ Hanya pasangan yang bisa menerima!",
 
@@ -360,6 +363,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const key = pairKey(requesterId, targetId);
 
     if (data[key]) {
+      if (interaction.replied || interaction.deferred) return;
       return interaction.reply({
         content: "❌ Pasangan sudah ada",
 
@@ -399,6 +403,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const targetId = parts[2];
 
     if (interaction.user.id !== targetId) {
+      if (interaction.replied || interaction.deferred) return;
       return interaction.reply({
         content: "❌ Hanya pasangan yang bisa menolak!",
 
@@ -529,14 +534,21 @@ ingin menjadi pasangan streak kamu!`,
 
       found = true;
 
+      // STREAK TIDAK MATI
       if (!streakData.dead) {
+        if (interaction.replied || interaction.deferred) return;
+
         return interaction.reply("❌ Streak kalian tidak mati");
       }
 
+      // NYAWA HABIS
       if (streakData.lives <= 0) {
+        if (interaction.replied || interaction.deferred) return;
+
         return interaction.reply("💀 Nyawa kalian habis");
       }
 
+      // PULIHKAN
       streakData.lives -= 1;
 
       streakData.dead = false;
@@ -547,6 +559,8 @@ ingin menjadi pasangan streak kamu!`,
 
       saveData(data);
 
+      if (interaction.replied || interaction.deferred) return;
+
       return interaction.reply(
         `❤️ Streak berhasil dipulihkan!
 
@@ -556,137 +570,138 @@ ingin menjadi pasangan streak kamu!`,
       );
     }
 
+    // BELUM PUNYA PASANGAN
     if (!found) {
+      if (interaction.replied || interaction.deferred) return;
+
       return interaction.reply("❌ Kamu belum punya pasangan streak");
     }
-  }
 
-  // =========================
-  // /PUTUSSTREAK
-  // =========================
-  if (interaction.commandName === "putusstreak") {
-    const userId = interaction.user.id;
+    // =========================
+    // /PUTUSSTREAK
+    // =========================
+    if (interaction.commandName === "putusstreak") {
+      const userId = interaction.user.id;
 
-    const target = interaction.options.getUser("user");
+      const target = interaction.options.getUser("user");
 
-    const key = pairKey(userId, target.id);
+      const key = pairKey(userId, target.id);
 
-    if (!data[key]) {
-      return interaction.reply("❌ Kalian tidak punya streak");
-    }
+      if (!data[key]) {
+        return interaction.reply("❌ Kalian tidak punya streak");
+      }
 
-    delete data[key];
+      delete data[key];
 
-    saveData(data);
+      saveData(data);
 
-    return interaction.reply(`💔 Kamu putus streak dengan ${target.username}`);
-  }
-});
-
-client.on("messageCreate", async (message) => {
-  console.log("MESSAGE CREATE BARU AKIF");
-
-  if (message.author.bot) return;
-
-  console.log("CHANNEL:", message.channel.id);
-
-  if (message.channel.id !== "1502280800798900375") {
-    console.log("BUKAN CHANNEL STREAK");
-
-    return;
-  }
-
-  const data = loadData();
-
-  let targetUser = null;
-
-  // =========================
-  // DETEKSI MENTION
-  // =========================
-  if (message.mentions.users.first()) {
-    targetUser = message.mentions.users.first();
-  }
-
-  // =========================
-  // DETEKSI REPLY
-  // =========================
-  else if (message.reference?.messageId) {
-    try {
-      const repliedMessage = await message.channel.messages.fetch(
-        message.reference.messageId,
+      return interaction.reply(
+        `💔 Kamu putus streak dengan ${target.username}`,
       );
+    }
+  }
 
-      targetUser = repliedMessage.author;
-    } catch {
+  client.on("messageCreate", async (message) => {
+    if (message.author.bot) return;
+
+    if (message.channel.id !== "1502280800798900375") {
       return;
     }
-  }
 
-  // TIDAK ADA TARGET
-  if (!targetUser) return;
+    const data = loadData();
 
-  // TIDAK BOLEH DIRI SENDIRI
-  if (targetUser.id === message.author.id) return;
+    let targetUser = null;
 
-  const key = pairKey(message.author.id, targetUser.id);
-
-  const streakData = data[key];
-
-  // BELUM PASANGAN
-  if (!streakData) return;
-
-  const today = getToday();
-
-  const yesterday = getYesterday();
-
-  // SUDAH STREAK HARI INI
-  if (streakData.lastDate === today) {
-    return;
-  }
-
-  // =========================
-  // ORANG PERTAMA MEMULAI
-  // =========================
-  if (streakData.pendingBy === null) {
-    streakData.pendingBy = message.author.id;
-
-    data[key] = streakData;
-
-    saveData(data);
-
-    return message.reply(`⏳ Menunggu balasan dari ${targetUser.username}...`);
-  }
-
-  // SPAM ORANG YANG SAMA
-  if (streakData.pendingBy === message.author.id) {
-    return;
-  }
-
-  // =========================
-  // PASANGAN MEMBALAS
-  // =========================
-  if (streakData.pendingBy === targetUser.id) {
-    // LANJUT STREAK
-    if (streakData.lastDate === yesterday) {
-      streakData.streak += 1;
+    // =========================
+    // DETEKSI MENTION
+    // =========================
+    if (message.mentions.users.first()) {
+      targetUser = message.mentions.users.first();
     }
 
-    streakData.lastDate = today;
+    // =========================
+    // DETEKSI REPLY
+    // =========================
+    else if (message.reference?.messageId) {
+      try {
+        const repliedMessage = await message.channel.messages.fetch(
+          message.reference.messageId,
+        );
 
-    streakData.pendingBy = null;
+        targetUser = repliedMessage.author;
+      } catch {
+        return;
+      }
+    }
 
-    streakData.dead = false;
+    // TIDAK ADA TARGET
+    if (!targetUser) return;
 
-    data[key] = streakData;
+    // TIDAK BOLEH DIRI SENDIRI
+    if (targetUser.id === message.author.id) return;
 
-    saveData(data);
+    const key = pairKey(message.author.id, targetUser.id);
 
-    return message.reply(
-      `🔥 Streak berhasil dijaga!
+    const streakData = data[key];
+
+    // BELUM PASANGAN
+    if (!streakData) return;
+
+    const today = getToday();
+
+    const yesterday = getYesterday();
+
+    // SUDAH STREAK HARI INI
+    if (streakData.lastDate === today) {
+      return;
+    }
+
+    // =========================
+    // ORANG PERTAMA MEMULAI
+    // =========================
+    if (streakData.pendingBy === null) {
+      streakData.pendingBy = message.author.id;
+
+      data[key] = streakData;
+
+      saveData(data);
+
+      return message.reply(
+        `⏳ Menunggu balasan dari ${targetUser.username}...`,
+      );
+    }
+
+    // SPAM ORANG YANG SAMA
+    if (streakData.pendingBy === message.author.id) {
+      return;
+    }
+
+    // =========================
+    // PASANGAN MEMBALAS
+    // =========================
+    if (streakData.pendingBy === targetUser.id) {
+      // LANJUT STREAK
+      if (streakData.lastDate === yesterday) {
+        streakData.streak += 1;
+      }
+
+      streakData.lastDate = today;
+
+      streakData.pendingBy = null;
+
+      streakData.dead = false;
+
+      data[key] = streakData;
+
+      saveData(data);
+
+      return message.reply(
+        `🔥 Streak berhasil dijaga!
 
 🔥 ${streakData.streak} Hari`,
-    );
-  }
+      );
+    }
+  });
 });
 
 client.login(process.env.TOKEN);
