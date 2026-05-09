@@ -93,7 +93,7 @@ async function fetchAvatarImage(url) {
     placeholderCtx.fillStyle = "#2f3136";
     placeholderCtx.fillRect(0, 0, 128, 128);
     placeholderCtx.fillStyle = "#ffffff";
-    placeholderCtx.font = "bold 48px Arial";
+    placeholderCtx.font = "bold 48px Arial, sans-serif";
     placeholderCtx.fillText("?", 40, 90);
     return placeholder;
   }
@@ -203,7 +203,7 @@ async function createStreakImage(user, partner, streakData) {
 
   const nameY = avatarY + avatarSize + 18;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "20px Arial";
+  ctx.font = "20px  Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(user.username, leftAvatarX + avatarSize / 2, nameY);
   ctx.fillText(partner.username, rightAvatarX + avatarSize / 2, nameY);
@@ -221,13 +221,16 @@ async function createStreakImage(user, partner, streakData) {
   ctx.restore();
 
   ctx.fillStyle = "#ffd864";
-  ctx.font = "bold 70px Arial";
+  ctx.font = "bold 70px Arial, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("🔥", flameX, flameY + 12);
+  ctx.fillStyle = "#ffb347";
+  ctx.beginPath();
+  ctx.arc(flameX, flameY, 35, 0, Math.PI * 2);
+  ctx.fill();
 
   const titleY = panelY + 45;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 36px Arial";
+  ctx.font = "bold 36px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("🔥 Streak Kamu", centerX, titleY);
 
@@ -236,8 +239,8 @@ async function createStreakImage(user, partner, streakData) {
   ctx.fillStyle = "#d9e1ff";
   ctx.font =
     ctx.measureText(pairText).width <= pairMaxWidth
-      ? "20px Arial"
-      : "18px Arial";
+      ? "20px Arial, sans-serif"
+      : "18px Arial, sans-serif";
   const pairY = titleY + 30;
   ctx.fillText(pairText, centerX, pairY);
 
@@ -268,17 +271,20 @@ async function createStreakImage(user, partner, streakData) {
   ctx.stroke();
 
   const statsY = statsBlockY + 32;
-  ctx.font = "20px Arial";
+  ctx.font = "20px  Arial, sans-serif";
   ctx.fillStyle = "#d9e1ff";
   ctx.textAlign = "center";
-  ctx.fillText(`🔥 Streak: ${streakData.streak} hari`, centerX, statsY);
-  ctx.fillText(`❤️ Nyawa: ${streakData.lives}`, centerX, statsY + 28);
+  ctx.fillText(`Streak : ${streakData.streak} hari`, centerX, statsY);
+
+  ctx.fillText(`Nyawa : ${streakData.lives}`, centerX, statsY + 28);
+
   ctx.fillText(
-    `💀 Status: ${streakData.dead ? "Mati" : "Aktif"}`,
+    `Status : ${streakData.dead ? "Mati" : "Aktif"}`,
     centerX,
     statsY + 56,
   );
-  ctx.fillText(`📅 Terakhir: ${streakData.lastDate}`, centerX, statsY + 82);
+
+  ctx.fillText(`Terakhir : ${streakData.lastDate}`, centerX, statsY + 82);
 
   return canvas.toBuffer("image/png");
 }
@@ -328,7 +334,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
   }
 })();
 
-client.on("ready", () => {
+client.on("clientReady", () => {
   console.log(`${client.user.tag} online!`);
 });
 
@@ -482,7 +488,6 @@ ingin menjadi pasangan streak kamu!`,
     const key = pairKey(user.id, partner.id);
 
     const streakData = data[key];
-
     if (!streakData) {
       return interaction.reply({
         content: "❌ Kalian tidak punya streak",
@@ -490,8 +495,9 @@ ingin menjadi pasangan streak kamu!`,
       });
     }
 
-    await interaction.deferReply();
-
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferReply();
+    }
     try {
       const buffer = await createStreakImage(user, partner, streakData);
 
