@@ -15,7 +15,9 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-const Canvas = require("@napi-rs/canvas");
+const { createCanvas, loadImage, GlobalFonts } = require("@napi-rs/canvas");
+
+// GlobalFonts.registerFromPath("./fonts/sans-serif-Regular.ttf", "sans-serif");
 
 // Canvas.registerFont("./fonts/sans-serif-Regular.ttf", {
 //   family: "sans-serif",
@@ -80,19 +82,19 @@ async function fetchAvatarImage(url) {
     const buffer = Buffer.from(arrayBuffer);
 
     try {
-      return await Canvas.loadImage(buffer);
+      return await loadImage(buffer);
     } catch (innerError) {
       console.warn(
-        "Canvas.loadImage(buffer) failed, retrying with URL:",
+        "loadImagee(buffer) failed, retrying with URL:",
         url,
         innerError,
       );
-      return await Canvas.loadImage(url);
+      return await loadImage(url);
     }
   } catch (error) {
     console.error("fetchAvatarImage error:", error, "url:", url);
 
-    const placeholder = Canvas.createCanvas(128, 128);
+    const placeholder = createCanvas(128, 128);
     const placeholderCtx = placeholder.getContext("2d");
     placeholderCtx.fillStyle = "#2f3136";
     placeholderCtx.fillRect(0, 0, 128, 128);
@@ -106,7 +108,7 @@ async function fetchAvatarImage(url) {
 async function createStreakImage(user, partner, streakData) {
   const width = 900;
   const height = 440;
-  const canvas = Canvas.createCanvas(width, height);
+  const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   const gradient = ctx.createLinearGradient(0, 0, width, height);
@@ -235,7 +237,7 @@ async function createStreakImage(user, partner, streakData) {
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 36px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("STREAK KAMU", centerX, titleY);
+  ctx.fillText("STREAK YOU", centerX, statsY);
 
   const pairText = `Pasangan: ${partner.username}`;
   const pairMaxWidth = panelW - 120;
