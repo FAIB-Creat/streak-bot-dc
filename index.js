@@ -15,13 +15,7 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-const { createCanvas, loadImage, GlobalFonts } = require("@napi-rs/canvas");
-
-// GlobalFonts.registerFromPath("./fonts/sans-serif-Regular.ttf", "sans-serif");
-
-// Canvas.registerFont("./fonts/sans-serif-Regular.ttf", {
-//   family: "sans-serif",
-// });
+const Canvas = require("canvas");
 
 const client = new Client({
   intents: [
@@ -82,19 +76,19 @@ async function fetchAvatarImage(url) {
     const buffer = Buffer.from(arrayBuffer);
 
     try {
-      return await loadImage(buffer);
+      return await Canvas.loadImage(buffer);
     } catch (innerError) {
       console.warn(
-        "loadImagee(buffer) failed, retrying with URL:",
+        "loadImage(buffer) failed, retrying with URL:",
         url,
         innerError,
       );
-      return await loadImage(url);
+      return await Canvas.loadImage(url);
     }
   } catch (error) {
     console.error("fetchAvatarImage error:", error, "url:", url);
 
-    const placeholder = createCanvas(128, 128);
+    const placeholder = Canvas.createCanvas(128, 128);
     const placeholderCtx = placeholder.getContext("2d");
     placeholderCtx.fillStyle = "#2f3136";
     placeholderCtx.fillRect(0, 0, 128, 128);
@@ -108,7 +102,7 @@ async function fetchAvatarImage(url) {
 async function createStreakImage(user, partner, streakData) {
   const width = 900;
   const height = 440;
-  const canvas = createCanvas(width, height);
+  const canvas = Canvas.createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   const gradient = ctx.createLinearGradient(0, 0, width, height);
@@ -237,7 +231,7 @@ async function createStreakImage(user, partner, streakData) {
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 36px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("STREAK YOU", centerX, statsY);
+  ctx.fillText("STREAK YOU", centerX, titleY);
 
   const pairText = `Pasangan: ${partner.username}`;
   const pairMaxWidth = panelW - 120;
@@ -276,6 +270,7 @@ async function createStreakImage(user, partner, streakData) {
   ctx.stroke();
 
   const statsY = statsBlockY + 32;
+
   ctx.font = "20px  sans-serif";
   ctx.fillStyle = "#d9e1ff";
   ctx.textAlign = "center";
@@ -291,9 +286,6 @@ async function createStreakImage(user, partner, streakData) {
 
   ctx.fillText(`Terakhir : ${streakData.lastDate}`, centerX, statsY + 82);
 
-  ctx.fillStyle = "white";
-  ctx.font = "40px sans-serif";
-  ctx.fillText("HELLO WORLD", 50, 50);
   return canvas.toBuffer("image/png");
 }
 
