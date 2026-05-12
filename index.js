@@ -15,10 +15,10 @@ const {
   ButtonStyle,
 } = require("discord.js");
 
-const Canvas = require("canvas");
+const Canvas = require("@napi-rs/canvas");
 
-// Canvas.registerFont("./fonts/Arial-Regular.ttf", {
-//   family: "Arial",
+// Canvas.registerFont("./fonts/sans-serif-Regular.ttf", {
+//   family: "sans-serif",
 // });
 
 const client = new Client({
@@ -97,7 +97,7 @@ async function fetchAvatarImage(url) {
     placeholderCtx.fillStyle = "#2f3136";
     placeholderCtx.fillRect(0, 0, 128, 128);
     placeholderCtx.fillStyle = "#ffffff";
-    placeholderCtx.font = "bold 48px Arial";
+    placeholderCtx.font = "bold 48px sans-serif";
     placeholderCtx.fillText("?", 40, 90);
     return placeholder;
   }
@@ -207,7 +207,7 @@ async function createStreakImage(user, partner, streakData) {
 
   const nameY = avatarY + avatarSize + 18;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "20px  Arial";
+  ctx.font = "20px  sans-serif";
   ctx.textAlign = "center";
   const safeUsername1 = user.username.replace(/[^\x00-\x7F]/g, "");
   const safeUsername2 = partner.username.replace(/[^\x00-\x7F]/g, "");
@@ -233,7 +233,7 @@ async function createStreakImage(user, partner, streakData) {
 
   const titleY = panelY + 45;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 36px Arial";
+  ctx.font = "bold 36px sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("STREAK KAMU", centerX, titleY);
 
@@ -242,8 +242,8 @@ async function createStreakImage(user, partner, streakData) {
   ctx.fillStyle = "#d9e1ff";
   ctx.font =
     ctx.measureText(pairText).width <= pairMaxWidth
-      ? "20px Arial"
-      : "18px Arial";
+      ? "20px sans-serif"
+      : "18px sans-serif";
   const pairY = titleY + 30;
   ctx.fillText(pairText, centerX, pairY);
 
@@ -274,7 +274,7 @@ async function createStreakImage(user, partner, streakData) {
   ctx.stroke();
 
   const statsY = statsBlockY + 32;
-  ctx.font = "20px  Arial";
+  ctx.font = "20px  sans-serif";
   ctx.fillStyle = "#d9e1ff";
   ctx.textAlign = "center";
   ctx.fillText(`Streak : ${streakData.streak} hari`, centerX, statsY);
@@ -289,9 +289,9 @@ async function createStreakImage(user, partner, streakData) {
 
   ctx.fillText(`Terakhir : ${streakData.lastDate}`, centerX, statsY + 82);
 
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "40px Arial";
-  ctx.fillText("TEST TEXT", 50, 50);
+  ctx.fillStyle = "white";
+  ctx.font = "40px sans-serif";
+  ctx.fillText("HELLO WORLD", 50, 50);
   return canvas.toBuffer("image/png");
 }
 
