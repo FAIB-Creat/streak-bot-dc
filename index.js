@@ -17,6 +17,10 @@ const {
 
 const Canvas = require("canvas");
 
+// Canvas.registerFont("./fonts/Arial-Regular.ttf", {
+//   family: "Arial",
+// });
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -93,7 +97,7 @@ async function fetchAvatarImage(url) {
     placeholderCtx.fillStyle = "#2f3136";
     placeholderCtx.fillRect(0, 0, 128, 128);
     placeholderCtx.fillStyle = "#ffffff";
-    placeholderCtx.font = "bold 48px Arial, sans-serif";
+    placeholderCtx.font = "bold 48px Arial";
     placeholderCtx.fillText("?", 40, 90);
     return placeholder;
   }
@@ -203,10 +207,12 @@ async function createStreakImage(user, partner, streakData) {
 
   const nameY = avatarY + avatarSize + 18;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "20px  Arial, sans-serif";
+  ctx.font = "20px  Arial";
   ctx.textAlign = "center";
-  ctx.fillText(user.username, leftAvatarX + avatarSize / 2, nameY);
-  ctx.fillText(partner.username, rightAvatarX + avatarSize / 2, nameY);
+  const safeUsername1 = user.username.replace(/[^\x00-\x7F]/g, "");
+  const safeUsername2 = partner.username.replace(/[^\x00-\x7F]/g, "");
+  ctx.fillText(safeUsername1, leftAvatarX + avatarSize / 2, nameY);
+  ctx.fillText(safeUsername2, rightAvatarX + avatarSize / 2, nameY);
 
   // Flame effect di antara avatar
   const flameX = centerX;
@@ -220,27 +226,24 @@ async function createStreakImage(user, partner, streakData) {
   ctx.fill();
   ctx.restore();
 
-  ctx.fillStyle = "#ffd864";
-  ctx.font = "bold 70px Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#ffb347";
   ctx.beginPath();
-  ctx.arc(flameX, flameY, 35, 0, Math.PI * 2);
+  ctx.fillStyle = "#ff9900";
+  ctx.arc(flameX, flameY, 30, 0, Math.PI * 2);
   ctx.fill();
 
   const titleY = panelY + 45;
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 36px Arial, sans-serif";
+  ctx.font = "bold 36px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("🔥 Streak Kamu", centerX, titleY);
+  ctx.fillText("STREAK KAMU", centerX, titleY);
 
   const pairText = `Pasangan: ${partner.username}`;
   const pairMaxWidth = panelW - 120;
   ctx.fillStyle = "#d9e1ff";
   ctx.font =
     ctx.measureText(pairText).width <= pairMaxWidth
-      ? "20px Arial, sans-serif"
-      : "18px Arial, sans-serif";
+      ? "20px Arial"
+      : "18px Arial";
   const pairY = titleY + 30;
   ctx.fillText(pairText, centerX, pairY);
 
@@ -271,7 +274,7 @@ async function createStreakImage(user, partner, streakData) {
   ctx.stroke();
 
   const statsY = statsBlockY + 32;
-  ctx.font = "20px  Arial, sans-serif";
+  ctx.font = "20px  Arial";
   ctx.fillStyle = "#d9e1ff";
   ctx.textAlign = "center";
   ctx.fillText(`Streak : ${streakData.streak} hari`, centerX, statsY);
@@ -286,6 +289,9 @@ async function createStreakImage(user, partner, streakData) {
 
   ctx.fillText(`Terakhir : ${streakData.lastDate}`, centerX, statsY + 82);
 
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "40px Arial";
+  ctx.fillText("TEST TEXT", 50, 50);
   return canvas.toBuffer("image/png");
 }
 
@@ -358,7 +364,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const targetId = parts[2];
 
     if (interaction.user.id !== targetId) {
-      if (interaction.replied || interaction.deferred) return;
       return interaction.reply({
         content: "❌ Hanya pasangan yang bisa menerima!",
 
@@ -369,7 +374,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const key = pairKey(requesterId, targetId);
 
     if (data[key]) {
-      if (interaction.replied || interaction.deferred) return;
       return interaction.reply({
         content: "❌ Pasangan sudah ada",
 
@@ -409,7 +413,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const targetId = parts[2];
 
     if (interaction.user.id !== targetId) {
-      if (interaction.replied || interaction.deferred) return;
       return interaction.reply({
         content: "❌ Hanya pasangan yang bisa menolak!",
 
@@ -542,15 +545,11 @@ ingin menjadi pasangan streak kamu!`,
 
       // STREAK TIDAK MATI
       if (!streakData.dead) {
-        if (interaction.replied || interaction.deferred) return;
-
         return interaction.reply("❌ Streak kalian tidak mati");
       }
 
       // NYAWA HABIS
       if (streakData.lives <= 0) {
-        if (interaction.replied || interaction.deferred) return;
-
         return interaction.reply("💀 Nyawa kalian habis");
       }
 
@@ -565,8 +564,6 @@ ingin menjadi pasangan streak kamu!`,
 
       saveData(data);
 
-      if (interaction.replied || interaction.deferred) return;
-
       return interaction.reply(
         `❤️ Streak berhasil dipulihkan!
 
@@ -578,136 +575,128 @@ ingin menjadi pasangan streak kamu!`,
 
     // BELUM PUNYA PASANGAN
     if (!found) {
-      if (interaction.replied || interaction.deferred) return;
-
       return interaction.reply("❌ Kamu belum punya pasangan streak");
     }
+  }
+  // =========================
+  // /PUTUSSTREAK
+  // =========================
+  if (interaction.commandName === "putusstreak") {
+    const userId = interaction.user.id;
 
-    // =========================
-    // /PUTUSSTREAK
-    // =========================
-    if (interaction.commandName === "putusstreak") {
-      const userId = interaction.user.id;
+    const target = interaction.options.getUser("user");
 
-      const target = interaction.options.getUser("user");
+    const key = pairKey(userId, target.id);
 
-      const key = pairKey(userId, target.id);
+    if (!data[key]) {
+      return interaction.reply("❌ Kalian tidak punya streak");
+    }
 
-      if (!data[key]) {
-        return interaction.reply("❌ Kalian tidak punya streak");
-      }
+    delete data[key];
 
-      delete data[key];
+    saveData(data);
 
-      saveData(data);
+    return interaction.reply(`💔 Kamu putus streak dengan ${target.username}`);
+  }
+});
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
 
-      return interaction.reply(
-        `💔 Kamu putus streak dengan ${target.username}`,
+  if (message.channel.id !== "1502280800798900375") {
+    return;
+  }
+
+  const data = loadData();
+
+  let targetUser = null;
+
+  // =========================
+  // DETEKSI MENTION
+  // =========================
+  if (message.mentions.users.first()) {
+    targetUser = message.mentions.users.first();
+  }
+
+  // =========================
+  // DETEKSI REPLY
+  // =========================
+  else if (message.reference?.messageId) {
+    try {
+      const repliedMessage = await message.channel.messages.fetch(
+        message.reference.messageId,
       );
+
+      targetUser = repliedMessage.author;
+    } catch {
+      return;
     }
   }
 
-  client.on("messageCreate", async (message) => {
-    if (message.author.bot) return;
+  // TIDAK ADA TARGET
+  if (!targetUser) return;
 
-    if (message.channel.id !== "1502280800798900375") {
-      return;
+  // TIDAK BOLEH DIRI SENDIRI
+  if (targetUser.id === message.author.id) return;
+
+  const key = pairKey(message.author.id, targetUser.id);
+
+  const streakData = data[key];
+
+  // BELUM PASANGAN
+  if (!streakData) return;
+
+  const today = getToday();
+
+  const yesterday = getYesterday();
+
+  // SUDAH STREAK HARI INI
+  if (streakData.lastDate === today) {
+    return;
+  }
+
+  // =========================
+  // ORANG PERTAMA MEMULAI
+  // =========================
+  if (streakData.pendingBy === null) {
+    streakData.pendingBy = message.author.id;
+
+    data[key] = streakData;
+
+    saveData(data);
+
+    return message.reply(`⏳ Menunggu balasan dari ${targetUser.username}...`);
+  }
+
+  // SPAM ORANG YANG SAMA
+  if (streakData.pendingBy === message.author.id) {
+    return;
+  }
+
+  // =========================
+  // PASANGAN MEMBALAS
+  // =========================
+  if (streakData.pendingBy === targetUser.id) {
+    // LANJUT STREAK
+    if (streakData.lastDate === yesterday) {
+      streakData.streak += 1;
     }
 
-    const data = loadData();
+    streakData.lastDate = today;
 
-    let targetUser = null;
+    streakData.pendingBy = null;
 
-    // =========================
-    // DETEKSI MENTION
-    // =========================
-    if (message.mentions.users.first()) {
-      targetUser = message.mentions.users.first();
-    }
+    streakData.dead = false;
 
-    // =========================
-    // DETEKSI REPLY
-    // =========================
-    else if (message.reference?.messageId) {
-      try {
-        const repliedMessage = await message.channel.messages.fetch(
-          message.reference.messageId,
-        );
+    data[key] = streakData;
 
-        targetUser = repliedMessage.author;
-      } catch {
-        return;
-      }
-    }
+    saveData(data);
 
-    // TIDAK ADA TARGET
-    if (!targetUser) return;
-
-    // TIDAK BOLEH DIRI SENDIRI
-    if (targetUser.id === message.author.id) return;
-
-    const key = pairKey(message.author.id, targetUser.id);
-
-    const streakData = data[key];
-
-    // BELUM PASANGAN
-    if (!streakData) return;
-
-    const today = getToday();
-
-    const yesterday = getYesterday();
-
-    // SUDAH STREAK HARI INI
-    if (streakData.lastDate === today) {
-      return;
-    }
-
-    // =========================
-    // ORANG PERTAMA MEMULAI
-    // =========================
-    if (streakData.pendingBy === null) {
-      streakData.pendingBy = message.author.id;
-
-      data[key] = streakData;
-
-      saveData(data);
-
-      return message.reply(
-        `⏳ Menunggu balasan dari ${targetUser.username}...`,
-      );
-    }
-
-    // SPAM ORANG YANG SAMA
-    if (streakData.pendingBy === message.author.id) {
-      return;
-    }
-
-    // =========================
-    // PASANGAN MEMBALAS
-    // =========================
-    if (streakData.pendingBy === targetUser.id) {
-      // LANJUT STREAK
-      if (streakData.lastDate === yesterday) {
-        streakData.streak += 1;
-      }
-
-      streakData.lastDate = today;
-
-      streakData.pendingBy = null;
-
-      streakData.dead = false;
-
-      data[key] = streakData;
-
-      saveData(data);
-
-      return message.reply(
-        `🔥 Streak berhasil dijaga!
+    return message.reply(
+      `🔥 Streak berhasil dijaga!
 
 🔥 ${streakData.streak} Hari`,
-      );
-    }
-  });
+    );
+  }
 });
 
 client.login(process.env.TOKEN);
