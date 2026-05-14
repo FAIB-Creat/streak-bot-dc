@@ -596,7 +596,7 @@ ingin menjadi pasangan streak kamu!`,
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  if (message.channel.id !== "1502280800798900375") {
+  if (message.channel.id !== "1502360396944638123") {
     return;
   }
 
